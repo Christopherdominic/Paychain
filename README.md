@@ -154,6 +154,47 @@ The app works in three modes:
 
 The app automatically detects configuration and falls back gracefully.
 
+## Vercel Deployment
+
+Deploy this repo as **two Vercel projects**:
+
+1. `backend` as a Node.js serverless API
+2. `frontend` as a Next.js app
+
+### 1) Deploy Backend (`backend/`)
+
+1. Create a new Vercel project and set the **Root Directory** to `backend`.
+2. Keep default install command (`npm install`).
+3. Build command can stay default; `vercel-build` runs `prisma generate`.
+4. Set environment variables in Vercel:
+	- `DATABASE_URL`
+	- `JWT_SECRET`
+	- `NODE_ENV=production`
+	- `CORS_ORIGIN=https://<your-frontend-domain>`
+	- Optional integrations (`STRIPE_SECRET_KEY`, `ISW_*`, `ETHEREUM_*`, etc.)
+5. Deploy and verify:
+	- `GET /health` returns `{ "status": "ok" }`
+
+Notes:
+- `backend/vercel.json` routes all requests to `backend/api/index.js`.
+- Express app setup is shared between local runtime and serverless runtime.
+
+### 2) Deploy Frontend (`frontend/`)
+
+1. Create a second Vercel project and set the **Root Directory** to `frontend`.
+2. Set required frontend environment variables:
+	- `NEXT_PUBLIC_API_URL=https://<your-backend-domain>`
+	- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (if Stripe is used)
+3. Deploy.
+
+### 3) Post-deployment Checks
+
+- Register/login from deployed frontend
+- Wallet fetch/funding flow
+- OTP request/verify flow
+- Transaction history
+- Stripe/interswitch/blockchain flows (if configured)
+
 ## Production Deployment
 
 See `INTEGRATION_GUIDE.md` for production checklist including:
