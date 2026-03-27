@@ -3,6 +3,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
+import { GlassPanel, IconTile, Notice, PrimaryButton, SectionEyebrow } from '@/components/ui';
+
+const ShieldIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M12 3 5 6v5c0 5 3.4 8.7 7 10 3.6-1.3 7-5 7-10V6z" />
+    <path d="m9.5 12 1.7 1.7L14.8 10" />
+  </svg>
+);
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -33,54 +41,71 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Login</h1>
-        
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+    <div className="min-h-screen px-4 py-8">
+      <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[0.8fr_1fr]">
+        <GlassPanel className="rounded-[32px] p-8">
+          <SectionEyebrow>Secure Access</SectionEyebrow>
+          <h1 className="mt-3 text-4xl font-semibold text-slate-900">Return to your hybrid wallet.</h1>
+          <p className="mt-4 text-slate-600">
+            Resume OTP-protected fiat transfers and blockchain-traceable activity from a single authenticated workspace.
+          </p>
+          <div className="mt-8 rounded-2xl bg-blue-50 p-4 text-blue-700">
+            <div className="flex items-center gap-3">
+              <IconTile tone="blue">
+                <ShieldIcon />
+              </IconTile>
+              <div>
+                <p className="font-semibold">Protected session</p>
+                <p className="text-sm text-blue-600">Your wallet, transfer history, and security state stay behind authenticated access.</p>
+              </div>
+            </div>
           </div>
-        )}
+        </GlassPanel>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
+        <GlassPanel className="rounded-[32px] p-8">
+          {error && (
+            <Notice tone="red" className="mb-5">{error}</Notice>
+          )}
 
-          <div>
-            <label className="block text-gray-700 mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400"
+                required
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400"
+                required
+              />
+            </div>
 
-        <p className="mt-4 text-center text-gray-600">
-          Don't have an account?{' '}
-          <Link href="/register" className="text-blue-600 hover:underline">
-            Register
-          </Link>
-        </p>
+            <PrimaryButton
+              type="submit"
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? 'Logging in...' : 'Enter Dashboard'}
+            </PrimaryButton>
+          </form>
+
+          <p className="mt-5 text-center text-sm text-slate-600">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="font-semibold text-slate-900 underline-offset-4 hover:underline">
+              Register
+            </Link>
+          </p>
+        </GlassPanel>
       </div>
     </div>
   );

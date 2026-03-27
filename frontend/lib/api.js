@@ -1,4 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const REQUEST_TIMEOUT_MS = 15000;
 
 const getToken = () => {
   if (typeof window !== 'undefined') {
@@ -7,92 +8,134 @@ const getToken = () => {
   return null;
 };
 
-const api = {
-  async register(name, email, password) {
-    const res = await fetch(`${API_URL}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password })
+const buildHeaders = (auth = false) => {
+  const headers = { 'Content-Type': 'application/json' };
+
+  if (auth) {
+    const token = getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
+};
+
+const request = async (path, options = {}) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      signal: controller.signal
     });
-    return res.json();
+
+    const data = await res.json();
+    if (!res.ok) {
+      return { error: data.error || 'Request failed', status: res.status };
+    }
+
+    return data;
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      return { error: 'Request timed out. Please try again.' };
+    }
+
+    return { error: 'Network error. Please try again.' };
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+const api = {
+  async register({ name, email, password, phone }) {
+    return request('/api/auth/register', {
+      method: 'POST',
+      headers: buildHeaders(),
+      body: JSON.stringify({ name, email, password, phone })
+    });
   },
 
   async login(email, password) {
-    const res = await fetch(`${API_URL}/api/auth/login`, {
+    return request('/api/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildHeaders(),
       body: JSON.stringify({ email, password })
     });
-    return res.json();
   },
 
   async getMe() {
-    const res = await fetch(`${API_URL}/api/auth/me`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
+    return request('/api/auth/me', {
+      headers: buildHeaders(true)
     });
-    return res.json();
   },
 
   async getWallet() {
-    const res = await fetch(`${API_URL}/api/wallet`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
+    return request('/api/wallet', {
+      headers: buildHeaders(true)
     });
-    return res.json();
   },
 
   async fundWallet(amount) {
-    const res = await fetch(`${API_URL}/api/wallet/fund`, {
+    return request('/api/wallet/fund', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
+      headers: buildHeaders(true),
       body: JSON.stringify({ amount })
     });
-    return res.json();
   },
 
-  async sendMoney(receiverEmail, amount, type = 'fiat') {
-    const res = await fetch(`${API_URL}/api/wallet/send`, {
+  async sendMoney({ receiverEmail, amount, type = 'fiat', sessionId, otp, otpSessionId }) {
+    return request('/api/wallet/send', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
-      body: JSON.stringify({ receiverEmail, amount, type })
+      headers: buildHeaders(true),
+      body: JSON.stringify({
+        receiverEmail,
+        amount,
+        type,
+        sessionId,
+        otp,
+        otpSessionId
+      })
     });
-    return res.json();
+  },
+
+  async requestOtp(phone, purpose = 'transaction') {
+    return request('/api/otp/request', {
+      method: 'POST',
+      headers: buildHeaders(true),
+      body: JSON.stringify({ phone, purpose })
+    });
+  },
+
+  async verifyOtp(sessionId, otp) {
+    return request('/api/otp/verify', {
+      method: 'POST',
+      headers: buildHeaders(true),
+      body: JSON.stringify({ sessionId, otp })
+    });
   },
 
   async getTransactions() {
-    const res = await fetch(`${API_URL}/api/transactions`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
+    return request('/api/transactions', {
+      headers: buildHeaders(true)
     });
-    return res.json();
   },
 
   async createStripePayment(amount) {
-    const res = await fetch(`${API_URL}/api/payment/stripe/create`, {
+    return request('/api/payment/stripe/create', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
+      headers: buildHeaders(true),
       body: JSON.stringify({ amount })
     });
-    return res.json();
   },
 
   async confirmStripePayment(paymentIntentId) {
-    const res = await fetch(`${API_URL}/api/payment/stripe/confirm`, {
+    return request('/api/payment/stripe/confirm', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
+      headers: buildHeaders(true),
       body: JSON.stringify({ paymentIntentId })
     });
-    return res.json();
   }
 };
 

@@ -12,11 +12,15 @@ model User {
   name      String
   email     String   @unique
   password  String
+  phone     String?
+  bvn       String?
+  bvnVerified Boolean @default(false)
   createdAt DateTime @default(now())
   wallet    Wallet?
   sentTransactions     Transaction[] @relation("SentTransactions")
   receivedTransactions Transaction[] @relation("ReceivedTransactions")
   payments  Payment[]
+  otpSessions OTPSession[]
 }
 
 model Wallet {
@@ -48,6 +52,18 @@ model Payment {
   status    String   @default("pending")
   reference String   @unique
   metadata  Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model OTPSession {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenId   String
+  phone     String
+  purpose   String
+  verified  Boolean  @default(false)
+  expiresAt DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }

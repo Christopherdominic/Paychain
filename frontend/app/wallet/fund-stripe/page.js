@@ -5,8 +5,16 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import api from '@/lib/api';
 import Link from 'next/link';
+import { GlassPanel, IconTile, Notice, PrimaryButton, SectionEyebrow } from '@/components/ui';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+
+const CardIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="M3 10h18" />
+  </svg>
+);
 
 function CheckoutForm({ amount, onSuccess }) {
   const stripe = useStripe();
@@ -46,17 +54,15 @@ function CheckoutForm({ amount, onSuccess }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <PaymentElement />
-      <button
+      <PrimaryButton
         type="submit"
         disabled={!stripe || loading}
-        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+        className="w-full"
       >
         {loading ? 'Processing...' : `Pay $${amount}`}
-      </button>
+      </PrimaryButton>
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+        <Notice tone="red">{error}</Notice>
       )}
     </form>
   );
@@ -97,55 +103,72 @@ export default function FundWalletStripe() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <Link href="/dashboard" className="text-blue-600 hover:underline">← Back to Dashboard</Link>
+    <div className="min-h-screen">
+      <nav className="border-b border-white/40 bg-white/60 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 py-4">
+          <Link href="/dashboard" className="text-sm font-semibold text-slate-600 transition hover:text-slate-900">← Back to Dashboard</Link>
         </div>
       </nav>
 
-      <div className="max-w-md mx-auto px-4 py-8">
-        <div className="bg-white p-8 rounded-lg shadow">
-          <h1 className="text-2xl font-bold mb-6 text-gray-800">Fund Wallet with Stripe</h1>
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
-
-          {!showPayment ? (
-            <form onSubmit={handleAmountSubmit} className="space-y-4">
-              <div>
-                <label className="block text-gray-700 mb-2">Amount ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <GlassPanel className="rounded-[32px] p-8">
+            <SectionEyebrow>Card Funding</SectionEyebrow>
+            <h1 className="mt-3 text-4xl font-semibold text-slate-900">Use Stripe for direct top-ups.</h1>
+            <p className="mt-4 text-slate-600">
+              This flow is ideal when you want a faster card-based funding option while keeping the PayChain wallet as your single balance source.
+            </p>
+            <div className="mt-8 rounded-2xl bg-slate-950 p-5 text-white">
+              <div className="flex items-center gap-3">
+                <IconTile className="bg-white/10 text-cyan-200">
+                  <CardIcon />
+                </IconTile>
+                <div>
+                  <p className="font-semibold">Secure checkout</p>
+                  <p className="text-sm text-slate-400">Card details stay inside Stripe Elements while PayChain records the resulting wallet credit.</p>
+                </div>
               </div>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-              >
-                Continue to Payment
-              </button>
-            </form>
-          ) : (
-            clientSecret && (
-              <Elements stripe={stripePromise} options={{ clientSecret }}>
-                <CheckoutForm amount={amount} onSuccess={handleSuccess} />
-              </Elements>
-            )
-          )}
+            </div>
+          </GlassPanel>
 
-          <p className="mt-4 text-sm text-gray-500 text-center">
-            Secure payment powered by Stripe
-          </p>
+          <GlassPanel className="rounded-[32px] p-8">
+            {error && (
+              <Notice tone="red" className="mb-5">{error}</Notice>
+            )}
+
+            {!showPayment ? (
+              <form onSubmit={handleAmountSubmit} className="space-y-4">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">Amount ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400"
+                    required
+                  />
+                </div>
+                <PrimaryButton
+                  type="submit"
+                  className="w-full"
+                >
+                  Continue to Payment
+                </PrimaryButton>
+              </form>
+            ) : (
+              clientSecret && (
+                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                  <CheckoutForm amount={amount} onSuccess={handleSuccess} />
+                </Elements>
+              )
+            )}
+
+            <p className="mt-5 text-center text-sm text-slate-500">
+              Secure payment powered by Stripe
+            </p>
+          </GlassPanel>
         </div>
       </div>
     </div>

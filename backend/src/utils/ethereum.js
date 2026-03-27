@@ -4,8 +4,24 @@ let provider = null;
 let wallet = null;
 let contract = null;
 
+const isPlaceholderValue = (value = '') => {
+  const normalized = value.trim().toLowerCase();
+  return (
+    !normalized ||
+    normalized.includes('your_') ||
+    normalized.includes('your-') ||
+    normalized === '0x_your_deployed_contract_address' ||
+    normalized === '0xyour_private_key_here'
+  );
+};
+
 const initializeEthereum = () => {
-  if (!process.env.ETHEREUM_RPC_URL || !process.env.ETHEREUM_PRIVATE_KEY) {
+  if (
+    !process.env.ETHEREUM_RPC_URL ||
+    !process.env.ETHEREUM_PRIVATE_KEY ||
+    isPlaceholderValue(process.env.ETHEREUM_RPC_URL) ||
+    isPlaceholderValue(process.env.ETHEREUM_PRIVATE_KEY)
+  ) {
     return false;
   }
 
@@ -13,7 +29,7 @@ const initializeEthereum = () => {
     provider = new ethers.JsonRpcProvider(process.env.ETHEREUM_RPC_URL);
     wallet = new ethers.Wallet(process.env.ETHEREUM_PRIVATE_KEY, provider);
 
-    if (process.env.PAYMENT_CONTRACT_ADDRESS) {
+    if (process.env.PAYMENT_CONTRACT_ADDRESS && !isPlaceholderValue(process.env.PAYMENT_CONTRACT_ADDRESS)) {
       const contractABI = [
         "function sendPayment(address recipient, string transactionId) external payable",
         "function deposit(string reference) external payable",
