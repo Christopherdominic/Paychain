@@ -4,13 +4,13 @@ A hybrid payment platform that allows users to register, create wallets, fund ac
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 (App Router), Tailwind CSS, Stripe React
+- **Frontend**: Next.js 14 (App Router), Tailwind CSS
 - **Backend**: Express.js, Node.js
 - **Database**: PostgreSQL
 - **ORM**: Prisma
 - **Authentication**: JWT + bcrypt
 - **Blockchain**: Ethereum (ethers.js) with smart contracts
-- **Payments**: Stripe integration
+- **Payments**: Interswitch integration (OAuth + OTP + Payment API)
 
 ## Project Structure
 
@@ -31,7 +31,7 @@ paychain/
 - PostgreSQL
 - npm or yarn
 - (Optional) Infura account for Ethereum
-- (Optional) Stripe account for payments
+- (Optional) Interswitch Developer account for live payment rails
 
 ### Backend Setup
 
@@ -50,7 +50,7 @@ npm run dev
 cd frontend
 npm install
 cp .env.example .env.local
-# Edit .env.local with API URL and Stripe key
+# Edit .env.local with API URL
 npm run dev
 ```
 
@@ -62,9 +62,16 @@ DATABASE_URL="postgresql://user:password@localhost:5432/paychain"
 JWT_SECRET="your-secret-key"
 PORT=5000
 
-# Optional: Stripe Integration
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
+# Optional: Interswitch Integration
+ISW_CLIENT_ID="your_client_id"
+ISW_CLIENT_SECRET="your_client_secret"
+ISW_BASE_URL="https://sandbox.interswitchng.com"
+ISW_OAUTH_BASE_URL="https://passport-v2.k8.isw.la"
+ISW_OAUTH_SCOPE="profile"
+ISW_BVN_ENDPOINT="/api/v1/identity/bvn"
+ISW_SEND_OTP_ENDPOINT="/api/v1/safetoken/send"
+ISW_VERIFY_OTP_ENDPOINT="/api/v1/safetoken/verify"
+ISW_PAYMENT_ENDPOINT="/api/v1/payments/initiate"
 
 # Optional: Ethereum Integration
 ETHEREUM_RPC_URL="https://sepolia.infura.io/v3/YOUR_PROJECT_ID"
@@ -75,27 +82,29 @@ PAYMENT_CONTRACT_ADDRESS="0x_contract_address"
 ### Frontend (.env.local)
 ```
 NEXT_PUBLIC_API_URL=http://localhost:5000
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 ## Features
 
 ✅ User registration and authentication
 ✅ Wallet creation and management
-✅ **Real Stripe payment integration**
+✅ **Real Interswitch integration (OAuth + OTP + payments)**
 ✅ **Real Ethereum blockchain transactions**
-✅ Mock payment gateway (fallback)
+✅ OTP-secured fiat transfers
+✅ Sandbox fallback mode for payment simulation
 ✅ Internal money transfers
 ✅ Smart contract integration
 ✅ Transaction history with blockchain tracking
 
 ## Integration Guides
 
-### Stripe Integration
-1. Sign up at https://stripe.com
-2. Get test API keys from Dashboard
-3. Add keys to `.env` files
-4. Test with card: 4242 4242 4242 4242
+### Interswitch Integration
+1. Create a developer account and app in Interswitch API Marketplace
+2. Get sandbox credentials (Client ID and Client Secret)
+3. Add Interswitch configuration to backend `.env`
+4. Use OTP endpoints and wallet funding APIs to validate flows in sandbox
+
+See `INTERSWITCH_INTEGRATION.md` for detailed endpoint and flow examples.
 
 ### Ethereum Integration
 1. Get Infura API key from https://infura.io
@@ -114,12 +123,12 @@ See `INTEGRATION_GUIDE.md` for detailed setup instructions.
 
 ### Wallet
 - `GET /api/wallet` - Get wallet details
-- `POST /api/wallet/fund` - Fund wallet (mock)
-- `POST /api/wallet/send` - Send money
+- `POST /api/wallet/fund` - Fund wallet via Interswitch (with simulation fallback)
+- `POST /api/wallet/send` - Send money (fiat via OTP flow or crypto via blockchain)
 
-### Payments
-- `POST /api/payment/stripe/create` - Create Stripe payment
-- `POST /api/payment/stripe/confirm` - Confirm payment
+### OTP
+- `POST /api/otp/request` - Request OTP for secure actions
+- `POST /api/otp/verify` - Verify OTP session
 
 ### Transactions
 - `GET /api/transactions` - Get transaction history
@@ -139,8 +148,8 @@ Deploy using Hardhat (see `backend/contracts/README.md`)
 
 The app works in three modes:
 
-1. **Full Integration**: Stripe + Ethereum configured
-2. **Partial**: Only Stripe or Ethereum configured
+1. **Full Integration**: Interswitch + Ethereum configured
+2. **Partial**: Only Interswitch or Ethereum configured
 3. **Simulation**: No external services (mock mode)
 
 The app automatically detects configuration and falls back gracefully.
@@ -149,7 +158,7 @@ The app automatically detects configuration and falls back gracefully.
 
 See `INTEGRATION_GUIDE.md` for production checklist including:
 - Mainnet deployment
-- Live Stripe keys
-- Webhook configuration
+- Live Interswitch credentials and endpoint verification
+- OTP and payment endpoint validation
 - Security hardening
 - Monitoring setup
